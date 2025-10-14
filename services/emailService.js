@@ -1,4 +1,15 @@
-<!DOCTYPE html>
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendVerificationEmail = async (email, firstName, verificationCode) => {
+    try {
+        const { data, error } = await resend.emails.send({
+            from: process.env.FROM_EMAIL || 'Sefask <onboarding@resend.dev>',
+            to: [email],
+            subject: 'Verify Your Email Address - Sefask',
+            html: `
+                <!DOCTYPE html>
                 <html>
 
                     <head>
@@ -47,3 +58,21 @@
                     </body>
 
                 </html>
+            `,
+        });
+
+        if (error) {
+            console.error('Resend error:', error);
+            throw new Error('Failed to send verification email');
+        }
+
+        return { success: true, messageId: data.id };
+    } catch (error) {
+        console.error('Email service error:', error);
+        throw new Error('Failed to send verification email');
+    }
+};
+
+module.exports = {
+    sendVerificationEmail
+};

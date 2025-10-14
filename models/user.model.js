@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -24,8 +25,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    verificationToken: {
+    verificationCode: {
         type: String
+    },
+    verificationCodeExpires: {
+        type: Date
     },
     resetPasswordToken: {
         type: String
@@ -60,33 +64,114 @@ userSchema.statics.signup = async function (firstName, lastName, email, password
     if (errors.length) throw new Error(JSON.stringify(errors));
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.create({ firstName, lastName, email, password: hashedPassword });
-    
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    const user = await this.create({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        verificationCode,
+        verificationCodeExpires
+    });
+
     return user;
 };
 
 userSchema.statics.signin = async function (email, password) {
     let errors = [];
 
-    // Basic field validation
     if (!email) errors.push({ field: "email", message: "Email is required." });
     if (!password) errors.push({ field: "password", message: "Password is required." });
 
     if (errors.length) throw new Error(JSON.stringify(errors));
 
-    // Find user by email
     const user = await this.findOne({ email });
     if (!user) {
         errors.push({ field: "email", message: "Invalid email or password." });
         throw new Error(JSON.stringify(errors));
     }
 
-    // Compare password with stored hash
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         errors.push({ field: "password", message: "Invalid email or password." });
         throw new Error(JSON.stringify(errors));
     }
+
+    return user;
+}
+
+userSchema.statics.verifyEmail = async function (email, verificationCode) {
+    let errors = [];
+
+    if (!email) {
+        errors.push({ field: "email", message: "Email is required." });
+    }
+    if (!verificationCode) {
+        errors.push({ field: "code", message: "Verification code is required." });
+    }
+
+    if (errors.length) throw new Error(JSON.stringify(errors));
+
+    const user = await this.findOne({ email });
+    if (!user) {
+        errors.push({ field: "email", message: "User not found." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    if (user.isVerified) {
+        errors.push({ field: "code", message: "Email is already verified." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    if (!user.verificationCode || user.verificationCode !== verificationCode) {
+        errors.push({ field: "code", message: "Invalid verification code." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    if (user.verificationCodeExpires && user.verificationCodeExpires < new Date()) {
+        errors.push({ field: "code", message: "Verification code has expired. Please request a new one." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    // Update user verification status
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationCodeExpires = undefined;
+    await user.save();
+
+    return user;
+}
+
+userSchema.statics.generateNewVerificationCode = async function (email) {
+    let errors = [];
+
+    if (!email) {
+        errors.push({ field: "email", message: "Email is required." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    const user = await this.findOne({ email });
+    if (!user) {
+        errors.push({ field: "email", message: "User not found." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    if (user.isVerified) {
+        errors.push({ field: "email", message: "Email is already verified." });
+        throw new Error(JSON.stringify(errors));
+    }
+
+    // Generate new 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpires = verificationCodeExpires;
+    await user.save();
 
     return user;
 }
