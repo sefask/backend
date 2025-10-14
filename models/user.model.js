@@ -40,28 +40,28 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.statics.signup = async function (firstName, lastName, email, password) {
-    let errors = [];
+    let errors = {};
 
     // Basic field validation
-    if (!firstName) errors.push({ field: "firstName", message: "First name is required." });
-    if (!lastName) errors.push({ field: "lastName", message: "Last name is required." });
-    if (!email) errors.push({ field: "email", message: "Email is required." });
-    if (!password) errors.push({ field: "password", message: "Password is required." });
+    if (!firstName) errors.firstName = "First name is required.";
+    if (!lastName) errors.lastName = "Last name is required.";
+    if (!email) errors.email = "Email is required.";
+    if (!password) errors.password = "Password is required.";
 
     if (email && !validator.isEmail(email)) {
-        errors.push({ field: "email", message: "Invalid email format." });
+        errors.email = "Invalid email format.";
     }
 
     if (password && password.length < 6) {
-        errors.push({ field: "password", message: "Password must be at least 6 characters long." });
+        errors.password = "Password must be at least 6 characters long.";
     }
 
-    if (errors.length) throw new Error(JSON.stringify(errors));
+    if (Object.keys(errors).length > 0) throw new Error(JSON.stringify(errors));
 
     const exists = await this.findOne({ email });
-    if (exists) errors.push({ field: "email", message: "Email is already taken." });
+    if (exists) errors.email = "Email is already taken.";
 
-    if (errors.length) throw new Error(JSON.stringify(errors));
+    if (Object.keys(errors).length > 0) throw new Error(JSON.stringify(errors));
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -82,22 +82,22 @@ userSchema.statics.signup = async function (firstName, lastName, email, password
 };
 
 userSchema.statics.signin = async function (email, password) {
-    let errors = [];
+    let errors = {};
 
-    if (!email) errors.push({ field: "email", message: "Email is required." });
-    if (!password) errors.push({ field: "password", message: "Password is required." });
+    if (!email) errors.email = "Email is required.";
+    if (!password) errors.password = "Password is required.";
 
-    if (errors.length) throw new Error(JSON.stringify(errors));
+    if (Object.keys(errors).length > 0) throw new Error(JSON.stringify(errors));
 
     const user = await this.findOne({ email });
     if (!user) {
-        errors.push({ field: "email", message: "Invalid email or password." });
+        errors.email = "Invalid email or password.";
         throw new Error(JSON.stringify(errors));
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-        errors.push({ field: "password", message: "Invalid email or password." });
+        errors.password = "Invalid email or password.";
         throw new Error(JSON.stringify(errors));
     }
 
@@ -105,35 +105,35 @@ userSchema.statics.signin = async function (email, password) {
 }
 
 userSchema.statics.verifyEmail = async function (email, verificationCode) {
-    let errors = [];
+    let errors = {};
 
     if (!email) {
-        errors.push({ field: "email", message: "Email is required." });
+        errors.email = "Email is required.";
     }
     if (!verificationCode) {
-        errors.push({ field: "code", message: "Verification code is required." });
+        errors.code = "Verification code is required.";
     }
 
-    if (errors.length) throw new Error(JSON.stringify(errors));
+    if (Object.keys(errors).length > 0) throw new Error(JSON.stringify(errors));
 
     const user = await this.findOne({ email });
     if (!user) {
-        errors.push({ field: "email", message: "User not found." });
+        errors.email = "User not found.";
         throw new Error(JSON.stringify(errors));
     }
 
     if (user.isVerified) {
-        errors.push({ field: "code", message: "Email is already verified." });
+        errors.code = "Email is already verified.";
         throw new Error(JSON.stringify(errors));
     }
 
     if (!user.verificationCode || user.verificationCode !== verificationCode) {
-        errors.push({ field: "code", message: "Invalid verification code." });
+        errors.code = "Invalid verification code.";
         throw new Error(JSON.stringify(errors));
     }
 
     if (user.verificationCodeExpires && user.verificationCodeExpires < new Date()) {
-        errors.push({ field: "code", message: "Verification code has expired. Please request a new one." });
+        errors.code = "Verification code has expired. Please request a new one.";
         throw new Error(JSON.stringify(errors));
     }
 
@@ -147,21 +147,21 @@ userSchema.statics.verifyEmail = async function (email, verificationCode) {
 }
 
 userSchema.statics.generateNewVerificationCode = async function (email) {
-    let errors = [];
+    let errors = {};
 
     if (!email) {
-        errors.push({ field: "email", message: "Email is required." });
+        errors.email = "Email is required.";
         throw new Error(JSON.stringify(errors));
     }
 
     const user = await this.findOne({ email });
     if (!user) {
-        errors.push({ field: "email", message: "User not found." });
+        errors.email = "User not found.";
         throw new Error(JSON.stringify(errors));
     }
 
     if (user.isVerified) {
-        errors.push({ field: "email", message: "Email is already verified." });
+        errors.email = "Email is already verified.";
         throw new Error(JSON.stringify(errors));
     }
 
