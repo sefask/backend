@@ -1,12 +1,19 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.MAILTRAP_USER || 'api',
+        pass: process.env.MAILTRAP_PASS || process.env.MAILTRAP_API_KEY,
+    },
+});
 
 const sendVerificationEmail = async (email, firstName, verificationCode) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: process.env.FROM_EMAIL || 'Sefask <onboarding@resend.dev>',
-            to: [email],
+        const from = process.env.FROM_EMAIL || 'Sefask <gutabarwaa@gmail.com>';
+        const mailOptions = {
+            from,
+            to: email,
             subject: 'Verify Your Email Address - Sefask',
             html: `
                 <!DOCTYPE html>
@@ -59,14 +66,11 @@ const sendVerificationEmail = async (email, firstName, verificationCode) => {
 
                 </html>
             `,
-        });
+        };
 
-        if (error) {
-            console.error('Resend error:', error);
-            throw new Error('Failed to send verification email');
-        }
+        const info = await transporter.sendMail(mailOptions);
 
-        return { success: true, messageId: data.id };
+        return { success: true, messageId: info.messageId, envelope: info.envelope };
     } catch (error) {
         console.error('Email service error:', error);
         throw new Error('Failed to send verification email');
@@ -74,5 +78,5 @@ const sendVerificationEmail = async (email, firstName, verificationCode) => {
 };
 
 module.exports = {
-    sendVerificationEmail
+    sendVerificationEmail,
 };
