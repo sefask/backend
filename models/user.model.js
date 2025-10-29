@@ -91,13 +91,13 @@ userSchema.statics.signin = async function (email, password) {
 
     const user = await this.findOne({ email });
     if (!user) {
-        errors.email = "Invalid email or password.";
+        errors.email = "No user with such email.";
         throw new Error(JSON.stringify(errors));
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-        errors.password = "Invalid email or password.";
+        errors.password = "Incorrect password.";
         throw new Error(JSON.stringify(errors));
     }
 

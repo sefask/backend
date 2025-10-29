@@ -7,7 +7,7 @@ const authenticateToken = async (req, res, next) => {
 
         if (!token) {
             return res.status(401).json({
-                errors: [{ field: "auth", message: "Access denied. No token provided." }]
+                errors: { auth: "You must be logged in to perform this action." }
             });
         }
 
@@ -18,7 +18,7 @@ const authenticateToken = async (req, res, next) => {
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {
             return res.status(401).json({
-                errors: [{ field: "auth", message: "Invalid token. User not found." }]
+                errors: { auth: "Invalid token. User not found." }
             });
         }
 
@@ -27,18 +27,18 @@ const authenticateToken = async (req, res, next) => {
     } catch (error) {
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({
-                errors: [{ field: "auth", message: "Invalid token." }]
+                errors: { auth: "Invalid token." }
             });
         }
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({
-                errors: [{ field: "auth", message: "Token expired." }]
+                errors: { auth: "Token expired." }
             });
         }
 
         console.error('Auth middleware error:', error);
         return res.status(500).json({
-            errors: [{ field: "auth", message: "Authentication error." }]
+            errors: { auth: "Authentication error." }
         });
     }
 };

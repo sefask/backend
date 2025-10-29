@@ -6,7 +6,7 @@ const { authenticateToken, optionalAuth } = require('../middleware/auth.middlewa
 router.post('/signup', signup)
 router.post('/signin', signin)
 router.post('/signout', signout)
-router.post('/verify-email', verifyEmail)
+router.post('/verify-email', authenticateToken, verifyEmail)
 router.post('/resend-verification', optionalAuth, resendVerification)
 router.get('/me', authenticateToken, getMe)
 
