@@ -39,8 +39,15 @@ exports.signup = async (req, res) => {
             }
         });
     } catch (err) {
-        const errors = JSON.parse(err.message);
-        res.status(400).json({ errors });
+        console.error('Signup error:', err);
+        try {
+            const errors = JSON.parse(err.message);
+            res.status(400).json({ errors });
+        } catch {
+            res.status(500).json({
+                errors: [{ field: "signup", message: err.message || "Signup failed" }]
+            });
+        }
     }
 }
 
@@ -51,7 +58,7 @@ exports.signin = async (req, res) => {
 
         const token = createToken(user._id);
         setAuthCookie(res, token);
-        
+
         res.status(200).json({
             message: "Signed in successfully!",
             user: {

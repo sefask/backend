@@ -39,6 +39,12 @@ app.use((req, res, next) => {
     next();
 });
 
+// Connect to MongoDB
+connectDB().catch((err) => {
+    console.error('Failed to connect to MongoDB:', err);
+    // Continue anyway for Vercel
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 
@@ -47,15 +53,24 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'Server is running' });
 });
 
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message
+    });
+});
+
 // For local development
 if (process.env.NODE_ENV !== 'production') {
-    connectDB().then(() => {
-        app.listen(PORT, () => {
-            console.log(`Successfully connected to DB and app is running on Port ${PORT}`);
-        });
-    }).catch((err) => {
-        console.error('Failed to start server:', err);
-        process.exit(1);
+    app.listen(PORT, () => {
+        console.log(`App is running on Port ${PORT}`);
     });
 }
 
