@@ -1,18 +1,24 @@
 {
-    "installCommand": "npm install",
-    "buildCommand": "npm run build",
     "version": 2,
     "builds": [
         {
-            "src": "index.js",
+            "src": "server.js",
             "use": "@vercel/node"
-        },
-        {
-            "src": "**/*.ts",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
-        {"src": "/(.*)", "dest": "/"}
-    ]
+        {
+            "src": "/(.*)",
+            "dest": "server.js"
+        }
+    ],
+    "env": {
+        "MONGO_URI": "@mongo_uri",
+        "JWT_SECRET": "@jwt_secret",
+        "FRONTEND_URL": "@frontend_url",
+        "MAILTRAP_USER": "@mailtrap_user",
+        "MAILTRAP_PASS": "@mailtrap_pass",
+        "FROM_EMAIL": "@from_email",
+        "NODE_ENV": "production"
+    }
 }
