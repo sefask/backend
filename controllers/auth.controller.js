@@ -28,7 +28,8 @@ exports.signup = async (req, res) => {
         } catch (emailError) {
             console.error('Failed to send verification email:', emailError);
         }
-        
+
+        const token = createToken(user._id);
         setAuthCookie(res, token);
 
         res.status(201).json({
