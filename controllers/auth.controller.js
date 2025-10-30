@@ -27,8 +27,9 @@ exports.signup = async (req, res) => {
             await sendVerificationEmail(user.email, user.firstName, user.verificationCode);
         } catch (emailError) {
             console.error('Failed to send verification email:', emailError);
-            // Continue with signup even if email fails
         }
+        
+        setAuthCookie(res, token);
 
         res.status(201).json({
             message: "Account created successfully. Please check your email for the 6-digit verification code.",
@@ -77,6 +78,18 @@ exports.signin = async (req, res) => {
 
 exports.verifyEmail = async (req, res) => {
     const { email, code } = req.body;
+
+    if (!code) {
+        return res.status(400).json({
+            errors: { code: "Verification code is required." }
+        });
+    }
+
+    if (code.length !== 6) {
+        return res.status(400).json({
+            errors: { code: "Verification code must be 6 digits." }
+        });
+    }
 
     try {
         const user = await User.verifyEmail(email, code);
@@ -153,13 +166,11 @@ exports.getMe = async (req, res) => {
         }
 
         res.status(200).json({
-            user: {
-                id: req.user._id,
-                email: req.user.email,
-                firstName: req.user.firstName,
-                lastName: req.user.lastName,
-                isVerified: req.user.isVerified
-            }
+            id: req.user._id,
+            email: req.user.email,
+            firstName: req.user.firstName,
+            lastName: req.user.lastName,
+            isVerified: req.user.isVerified
         });
     } catch (err) {
         res.status(500).json({
