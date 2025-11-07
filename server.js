@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const { connectToDB } = require('./utils/db');
 const authRoutes = require('./routes/auth.route');
+const assignmentRoutes = require('./routes/assignment.route');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,10 +22,11 @@ app.use((req, res, next) => {
 
 // Connect to DB first
 connectToDB()
-  .then(() => {
-      console.log("✅ Connected to MongoDB");
-      app.use('/api/auth', authRoutes);
+    .then(() => {
+        console.log("✅ Connected to MongoDB");
+        app.use('/api/auth', authRoutes);
+        app.use('/api/assignments', assignmentRoutes);
 
-      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    })
+    .catch(err => console.error("❌ MongoDB connection error:", err));
