@@ -208,3 +208,31 @@ exports.getAssignment = async (req, res) => {
         });
     }
 };
+
+exports.deleteAssignment = async (req, res) => {
+    try {
+        const assignment = await Assignment.findOneAndDelete({
+            _id: req.params.id,
+            author: req.user._id
+        });
+
+        if (!assignment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Assignment not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Assignment deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting assignment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting assignment'
+        });
+    }
+};
