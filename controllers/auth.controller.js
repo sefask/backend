@@ -72,8 +72,15 @@ exports.signin = async (req, res) => {
             }
         });
     } catch (err) {
-        const errors = JSON.parse(err.message);
-        res.status(400).json({ errors });
+        console.error('Signin error:', err);
+        try {
+            const errors = JSON.parse(err.message);
+            res.status(400).json({ errors });
+        } catch {
+            res.status(500).json({
+                errors: [{ field: "signin", message: err.message || "Signin failed" }]
+            });
+        }
     }
 }
 
