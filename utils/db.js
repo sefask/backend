@@ -11,6 +11,13 @@ async function connectToDB() {
     const opts = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      maxPoolSize: 5,
+      minPoolSize: 1,
+      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 10000,
+      socketKeepAliveMS: 30000,
+      retryWrites: true,
+      w: 'majority',
     };
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => mongoose);
   }
