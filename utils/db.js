@@ -15,7 +15,6 @@ async function connectToDB() {
       minPoolSize: 1,
       socketTimeoutMS: 45000,
       serverSelectionTimeoutMS: 10000,
-      socketKeepAliveMS: 30000,
       retryWrites: true,
       w: 'majority',
     };
