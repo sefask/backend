@@ -26,6 +26,14 @@ connectToDB()
         console.log("✅ Connected to MongoDB");
         app.use('/api/auth', authRoutes);
         app.use('/api/assignments', assignmentRoutes);
+        app.get('/', (req, res) => {
+            res.status(200).json({
+                message: "Welcome to the Sefask API",
+                status: "ready",
+                timestamp: new Date(),
+                uptime: process.uptime()
+            });
+        });
 
         app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     })
