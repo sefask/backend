@@ -13,10 +13,11 @@ async function connectToDB() {
       useUnifiedTopology: true,
       maxPoolSize: 5,
       minPoolSize: 1,
-      socketTimeoutMS: 45000,
-      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,      // 45 seconds
+      serverSelectionTimeoutMS: 15000,  // 15 seconds (increased from 10s)
       retryWrites: true,
       w: 'majority',
+      maxIdleTimeMS: 60000,         // For serverless environments
     };
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => mongoose);
   }

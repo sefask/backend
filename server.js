@@ -20,6 +20,20 @@ app.use((req, res, next) => {
     next();
 });
 
+// Initialize DB connection middleware on FIRST REQUEST (before routes)
+app.use(async (req, res, next) => {
+    try {
+        await connectToDB();
+        next();
+    } catch (err) {
+        console.error("❌ MongoDB connection error:", err);
+        return res.status(503).json({
+            error: "Service Unavailable",
+            message: "Database connection failed"
+        });
+    }
+});
+
 // Health check endpoint
 app.get('/', (req, res) => {
     res.status(200).json({
@@ -30,34 +44,13 @@ app.get('/', (req, res) => {
     });
 });
 
-// Register routes (DB connection will happen on first request)
+// Register routes (DB connection already established)
 app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 
-// Initialize DB connection on startup (for development)
+// Start server
 if (process.env.NODE_ENV !== 'production') {
-    connectToDB()
-        .then(() => console.log("✅ Connected to MongoDB"))
-        .catch(err => console.error("❌ MongoDB connection error:", err));
-
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-} else {
-    // On Vercel, initialize connection on first request to an API route
-    app.use(async (req, res, next) => {
-        if (req.path.startsWith('/api/')) {
-            try {
-                await connectToDB();
-                console.log("✅ Connected to MongoDB");
-            } catch (err) {
-                console.error("❌ MongoDB connection error:", err);
-                return res.status(503).json({
-                    error: "Service Unavailable",
-                    message: "Database connection failed"
-                });
-            }
-        }
-        next();
-    });
 }
 
 // Export for Vercel serverless
